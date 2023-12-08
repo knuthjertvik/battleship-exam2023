@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Component } from 'react-simplified';
-import battleshipService, { Subscription } from './battleship-service';
+import battleshipService, { Subscription, ServerMessage } from './battleship-service';
 import { Alert, Card, Row, Column } from './widgets';
 
 export class Battleship extends Component {
@@ -15,7 +15,15 @@ export class Battleship extends Component {
     this.subscription.onopen = () => {
       this.connected = true;
       this.forceUpdate(); // To re-render the component
+    }; 
+
+    this.subscription.onmessage = (message: ServerMessage) => {
+      if ('result' in message) {
+        this.gameResult = message.result;
+        this.forceUpdate(); // Update the component with the new game result
+      }
     };
+    
 
     this.subscription.onerror = (error) => {
       this.connected = false;
@@ -31,12 +39,14 @@ export class Battleship extends Component {
   render() {
     return (
       <Card title={'Battleship (' + (this.connected ? 'Connected' : 'Not connected') + ')'}>
-        <Card title="Make Your Guess">
+        <Card title="Make Your Guess 0-4">
           <Row>
             {/* Input fields for coordinates */}
             <Column>
               <input
                 type="number"
+                min="0"
+                max="4"
                 value={this.guess[0]}
                 onChange={(e) => this.setGuess(0, parseInt(e.target.value))}
                 placeholder="Row (0-4)"
@@ -45,6 +55,8 @@ export class Battleship extends Component {
             <Column>
               <input
                 type="number"
+                min="0"
+                max="4"
                 value={this.guess[1]}
                 onChange={(e) => this.setGuess(1, parseInt(e.target.value))}
                 placeholder="Column (0-4)"
@@ -54,14 +66,25 @@ export class Battleship extends Component {
               <button onClick={this.sendGuess}>Guess</button>
             </Column>
           </Row>
-          {this.gameResult && <div>Result: {this.gameResult}</div>}
+          </Card>
+          <Card title="Game Result">
+  <div>
+    {this.gameResult === 'hit' ? 'Hit! You found the boat!' :
+     this.gameResult === 'miss' ? 'Miss. Try again.' :
+     this.gameResult === 'otherhit' ? 'Someone else found the boat' :
+     'No value'}
+  </div>
+</Card>
+
         </Card>
-      </Card>
     );
   }
 
   setGuess(index: number, value: number) {
-    this.guess[index] = value;
+    if (value >= 0 && value <= 4) {
+      this.guess[index] = value;
+      this.forceUpdate(); // Oppdater komponenten
+    }
   }
 
   sendGuess = () => {
@@ -72,7 +95,6 @@ export class Battleship extends Component {
     }
   }
 
-  // Lifecycle methods and event handlers (onopen, onmessage, etc.) similar to Chat component
 }
 
-// Make sure to include the beforeUnmount method to unsubscribe from the service
+

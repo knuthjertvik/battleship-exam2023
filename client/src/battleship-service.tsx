@@ -1,5 +1,6 @@
 export type ClientMessage = { coordinates: [number, number] };
-export type ServerMessage = { result: 'hit' | 'miss' };
+export type ServerMessage = { result: 'hit' | 'miss' | 'otherhit' };
+
 
 class BattleshipService {
   connection = new WebSocket('ws://localhost:3000/api/v1/battleship');

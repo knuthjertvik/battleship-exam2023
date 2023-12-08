@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 
 // Message types
 export type ClientMessage = { coordinates: [number, number] };
-export type ServerMessage = { result: 'hit' | 'miss' };
+export type ServerMessage = { result: 'hit' | 'miss' | 'otherhit' };
 
 /**
  * Battleship server
@@ -29,14 +29,19 @@ export default class BattleshipServer {
         // Notify the guessing client
         connection.send(JSON.stringify({ result } as ServerMessage));
 
-        // Notify all other clients if hit
-        if (result === 'hit') {
-          this.connections.forEach(conn => {
-            if (conn !== connection) {
-              conn.send(JSON.stringify({ result } as ServerMessage));
-            }
-          });
-        }
+   // Notify all other clients if hit
+   if (result === 'hit') {
+    this.connections.forEach(conn => {
+      if (conn !== connection) {
+        conn.send(JSON.stringify({ result: 'otherhit' } as ServerMessage)); // Send 'otherhit' to other clients
+      } 
+      // I dont really need this else statement, but I want to keep it for now
+      else {
+        conn.send(JSON.stringify({ result } as ServerMessage)); // Send 'hit' to the client who guessed correctly
+      }
+    });
+  }
+
       });
 
       connection.on('close', () => {
